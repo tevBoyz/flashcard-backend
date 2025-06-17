@@ -1,0 +1,23 @@
+1. MediTrack: Smart Patient Appointment & Queue Management System
+Idea:
+A web/mobile app for hospitals and clinics that manages doctor appointments, walk-ins, real-time queue status, and sends automated reminders. It also lets patients view waiting times and rebook if needed.
+
+2. DormMate: University Dormitory Allocation and Management System
+Idea:
+A platform for university housing departments to assign dorms/rooms based on preferences (roommates, gender, major), handle maintenance requests, track occupancy, and automate billing.
+
+3. SkillHub: Peer-to-Peer Skill Sharing & Tutoring Platform
+Idea:
+A platform where students or local users can offer and book short-term lessons (e.g., guitar, math, coding). Includes scheduling, payment (mock/internal), user reviews, and matching based on interests.
+
+4. SafeRide: Campus Shuttle Tracking & Management System
+Idea:
+A system for universities to manage shuttle schedules, display real-time shuttle locations to students, and collect ridership data. Drivers can mark delays; students can plan around shuttle availability.
+
+5. TaskFlow: Collaborative Academic Project and Task Management Tool
+Idea:
+A tool designed for university teams to manage class projects: assign tasks, track progress, comment threads, and submission deadlines. Similar to Trello/Asana but focused on academic needs.
+
+6. UniSched: Intelligent University Class Scheduling System"
+Idea:
+UniSched is a web-based application that automates and optimizes the creation of university class schedules. It considers instructor availability, classroom capacity, student batch requirements, course prerequisites, and department rules. 
