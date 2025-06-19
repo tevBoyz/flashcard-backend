@@ -15,22 +15,27 @@ export class GeminiService {
     this.genAI = new GoogleGenerativeAI(apiKey);
 
   }
-
-
   
   async generateFlashcards(text: string) {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `
-Convert the following text into a list of flashcards. 
-Each flashcard should have a question and an answer in this format:
-[
-  { "question": "...", "answer": "..." }
-]
-Text:
-"""
-${text}
-"""`;
+      Convert the following text into a list of flashcards. 
+      Each flashcard should have a question and an answer in this format:
+        [
+          { "question": "...", "answer": "..." }
+        ]
+
+      Follow this rules:
+        1. Create comprehensive Q&A pairs covering all key topics
+        2. Respond ONLY with valid JSON, no additional text
+        3. The question should be short answer format
+        3. The answer part should not exceed more than 5 words.
+
+      Text:
+      """
+      ${text}
+      """`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

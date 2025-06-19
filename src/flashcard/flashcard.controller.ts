@@ -32,7 +32,7 @@ export class FlashcardController {
   }
 
   //For Gemini AI integration
-  @Post()
+  @Post('gemini')
   async generate(@Body('text') text: string) {
     const flashcards = await this.geminiService.generateFlashcards(text);
     return flashcards;
@@ -79,19 +79,20 @@ export class FlashcardController {
         throw new BadRequestException('File upload failed or invalid file.');
       }
       
-// // 1. Read the text
-//     const textContent = await fs.readFile(file.path, 'utf-8');
-//     console.log('[DEBUG] File content:', textContent.slice(0, 200)); // Log first 200 chars
+    // 1. Read the text
+    const textContent = await fs.readFile(file.path, 'utf-8');
+    // console.log('[DEBUG] File content:', textContent.slice(0, 200)); // Log first 200 chars
 
-//     // 2. Send to Gemini
-//     const flashcards = await this.geminiService.generateFlashcards(textContent);
-//     console.log('[DEBUG] Flashcards:', flashcards);
+    // 2. Send to Gemini
+    const flashcards = await this.geminiService.generateFlashcards(textContent);
+    // console.log('[DEBUG] Flashcards:', flashcards);
 
 
       return {
         message: 'File uploaded successfully',
-        filePath: file.path,
-        originalName: file.originalname
+        // filePath: file.path,
+        // originalName: file.originalname,
+        flashcards: flashcards
       };
     }
   }
