@@ -15,9 +15,9 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   });
-  //await app.listen(3000);
+  await app.listen(3000);
 } 
 bootstrap();
 
 
-export default server; // ← Vercel uses this as handler
+// export default server; // ← Vercel uses this as handler
