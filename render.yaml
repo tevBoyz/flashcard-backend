@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: your-nestjs-app
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
