@@ -15,9 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FlashcardController = void 0;
 const common_1 = require("@nestjs/common");
 const flashcard_service_1 = require("./flashcard.service");
-const flashcard_entity_1 = require("./flashcard.entity");
 const gemini_service_1 = require("../gemini-service/gemini.service");
 const fs = require("fs/promises");
+const pdf = require("pdf-parse");
+const mammoth = require("mammoth");
+const AdmZip = require("adm-zip");
+const xml2js_1 = require("xml2js");
 const common_2 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
 const multer_1 = require("multer");
@@ -31,80 +34,128 @@ let FlashcardController = class FlashcardController {
         this.service = service;
         this.geminiService = geminiService;
     }
-    getAll() {
-        return this.service.findAll();
-    }
-    getOne(id) {
-        return this.service.findOne(+id);
-    }
-    async generate(text) {
-        const flashcards = await this.geminiService.generateFlashcards(text);
-        return flashcards;
-    }
-    create(flashcard) {
-        return this.service.create(flashcard);
-    }
-    update(id, data) {
-        return this.service.update(+id, data);
-    }
-    remove(id) {
-        return this.service.remove(+id);
-    }
     async uploadFile(file) {
         if (!file) {
             throw new common_2.BadRequestException('File upload failed or invalid file.');
         }
-        const textContent = await fs.readFile(file.path, 'utf-8');
-        const flashcards = await this.geminiService.generateFlashcards(textContent);
-        return {
-            message: 'File uploaded successfully',
-            flashcards: flashcards
-        };
+        try {
+            const textContent = await this.extractTextFromFile(file);
+            const flashcards = await this.geminiService.generateFlashcards(textContent);
+            await fs.unlink(file.path);
+            return {
+                message: 'File processed successfully',
+                flashcards: flashcards,
+            };
+        }
+        catch (error) {
+            if (file.path)
+                await fs.unlink(file.path).catch(() => { });
+            throw new common_2.BadRequestException(error.message || 'Error processing file');
+        }
+    }
+    async extractTextFromFile(file) {
+        try {
+            switch (file.mimetype) {
+                case 'text/plain':
+                    return await fs.readFile(file.path, 'utf-8');
+                case 'application/pdf':
+                    const pdfBuffer = await fs.readFile(file.path);
+                    const pdfData = await pdf(pdfBuffer);
+                    return pdfData.text;
+                case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                    return await this.extractDocxText(file.path);
+                case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+                    return await this.extractTextFromSlide(file.path);
+                default:
+                    throw new Error('Unsupported file type');
+            }
+        }
+        catch (error) {
+            throw new Error(`Failed to extract text: ${error.message}`);
+        }
+    }
+    async extractDocxText(filePath) {
+        try {
+            const result = await mammoth.extractRawText({ path: filePath });
+            return result.value;
+        }
+        catch (error) {
+            throw new Error(`Failed to extract text from DOCX: ${error.message}`);
+        }
+    }
+    async extractTextFromSlide(filePath) {
+        try {
+            const fileBuffer = await fs.readFile(filePath);
+            const zip = new AdmZip(fileBuffer);
+            const zipEntries = zip.getEntries();
+            let textContent = '';
+            for (const entry of zipEntries) {
+                if (entry.entryName.match(/ppt\/slides\/slide\d+\.xml/)) {
+                    try {
+                        const slideContent = entry.getData().toString('utf-8');
+                        const slideText = await this.parseSlideContent(slideContent);
+                        textContent += slideText + '\n\n';
+                    }
+                    catch (slideError) {
+                        console.warn(`Error processing slide ${entry.entryName}: ${slideError.message}`);
+                        continue;
+                    }
+                }
+            }
+            if (!textContent.trim()) {
+                throw new Error('No readable text content found in PPTX');
+            }
+            return textContent.trim();
+        }
+        catch (error) {
+            throw new Error(`Failed to extract text from PPTX: ${error.message}`);
+        }
+    }
+    async parseSlideContent(xmlContent) {
+        return new Promise((resolve, reject) => {
+            const cleanedXml = xmlContent
+                .replace(/^\uFEFF/, '')
+                .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+            (0, xml2js_1.parseString)(cleanedXml, { explicitArray: false }, (err, result) => {
+                if (err) {
+                    return reject(new Error(`XML parsing error: ${err.message}`));
+                }
+                try {
+                    let slideText = '';
+                    const processText = (element) => {
+                        if (typeof element === 'string') {
+                            slideText += element + ' ';
+                        }
+                        else if (element?.['a:t']) {
+                            slideText += element['a:t'] + ' ';
+                        }
+                        else if (element?.['a:r']?.['a:t']) {
+                            slideText += element['a:r']['a:t'] + ' ';
+                        }
+                        else if (Array.isArray(element)) {
+                            element.forEach(processText);
+                        }
+                        else if (typeof element === 'object') {
+                            Object.values(element).forEach(processText);
+                        }
+                    };
+                    const shapes = result?.['p:sld']?.['p:cSld']?.['p:spTree']?.['p:sp'] || [];
+                    shapes.forEach((shape) => {
+                        const textBody = shape?.['p:txBody'];
+                        if (textBody) {
+                            processText(textBody);
+                        }
+                    });
+                    resolve(slideText.trim());
+                }
+                catch (parseError) {
+                    reject(new Error(`Slide content processing error: ${parseError.message}`));
+                }
+            });
+        });
     }
 };
 exports.FlashcardController = FlashcardController;
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Array)
-], FlashcardController.prototype, "getAll", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", flashcard_entity_1.Flashcard)
-], FlashcardController.prototype, "getOne", null);
-__decorate([
-    (0, common_1.Post)('gemini'),
-    __param(0, (0, common_1.Body)('text')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], FlashcardController.prototype, "generate", null);
-__decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [flashcard_entity_1.Flashcard]),
-    __metadata("design:returntype", flashcard_entity_1.Flashcard)
-], FlashcardController.prototype, "create", null);
-__decorate([
-    (0, common_1.Put)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", flashcard_entity_1.Flashcard)
-], FlashcardController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], FlashcardController.prototype, "remove", null);
 __decorate([
     (0, common_1.Post)('upload'),
     (0, common_2.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
@@ -116,15 +167,22 @@ __decorate([
                 callback(null, fileName);
             },
         }),
-        limits: {
-            fileSize: 500 * 1024,
-        },
         fileFilter: (req, file, callback) => {
-            if (file.mimetype !== 'text/plain') {
-                return callback(new common_2.BadRequestException('Only .txt files are allowed'), false);
+            const sizeLimits = {
+                'text/plain': 2 * 1024 * 1024,
+                'application/pdf': 10 * 1024 * 1024,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 15 * 1024 * 1024,
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation': 20 * 1024 * 1024,
+            };
+            if (!sizeLimits[file.mimetype]) {
+                return callback(new common_2.BadRequestException('Only .txt, .pdf, .docx, and .pptx files are allowed'), false);
+            }
+            if (file.size > sizeLimits[file.mimetype]) {
+                const fileType = path.extname(file.originalname).toUpperCase();
+                return callback(new common_2.BadRequestException(`File too large. Max size for ${fileType} files is ${sizeLimits[file.mimetype] / (1024 * 1024)}MB`), false);
             }
             callback(null, true);
-        }
+        },
     })),
     __param(0, (0, common_2.UploadedFile)()),
     __metadata("design:type", Function),
@@ -133,6 +191,7 @@ __decorate([
 ], FlashcardController.prototype, "uploadFile", null);
 exports.FlashcardController = FlashcardController = __decorate([
     (0, common_1.Controller)('flashcards'),
-    __metadata("design:paramtypes", [flashcard_service_1.FlashcardService, gemini_service_1.GeminiService])
+    __metadata("design:paramtypes", [flashcard_service_1.FlashcardService,
+        gemini_service_1.GeminiService])
 ], FlashcardController);
 //# sourceMappingURL=flashcard.controller.js.map
