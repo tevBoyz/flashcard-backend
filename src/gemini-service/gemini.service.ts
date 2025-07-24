@@ -27,8 +27,10 @@ export class GeminiService {
         - Cover **all important facts and ideas** from the text — do not miss anything.
         - Use various suitable flashcard types: short answer, true/false, fill-in-the-blank, etc.
         - Make the **questions descriptive and self-contained** so they make sense without needing the full text.
-        - Answers must be **short**, **clear**, and **no longer than 4 words**.
+        - Answers must be **short**, **clear**, and **no longer than 6 words, unless it is necessary.**.
+        - Use long answers only if they need more explanation to make a point.
         - Use **natural language and proper grammar**.
+        - Punctuations are important. Use question marks and others punctuation for the questions and answers.
         - Format the output as **pure JSON only** — no explanations or extra text.
 
       Text:
@@ -37,31 +39,9 @@ export class GeminiService {
       """
     `;
 
-
-    // const prompt = `
-    //   Convert the following text into a list of flashcards. 
-    //   Each flashcard should have a question and an answer in this format:
-    //     [
-    //       { "question": "...", "answer": "..." }
-    //     ]
-
-    //   Follow this rules:
-    //     1. Create comprehensive Q&A pairs covering all key topics
-    //     2. Respond ONLY with valid JSON, no additional text
-    //     3. The question types can be short answer or True or false
-    //     4. The answers should not exceed more than 4 words.
-    //     5. Make the quesions more decriptive, longer sentences.
-
-    //   Text:
-    //   """
-    //   ${text}
-    //   """`;
-
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const rawText = response.text();
-
-    //console.log('[DEBUG] Gemini raw response:', rawText);
 
     const jsonStart = rawText.indexOf('[');
     const jsonEnd = rawText.lastIndexOf(']') + 1;
