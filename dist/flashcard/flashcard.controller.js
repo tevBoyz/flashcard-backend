@@ -169,10 +169,10 @@ __decorate([
         }),
         fileFilter: (req, file, callback) => {
             const sizeLimits = {
-                'text/plain': 2 * 1024 * 1024,
-                'application/pdf': 10 * 1024 * 1024,
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 15 * 1024 * 1024,
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation': 20 * 1024 * 1024,
+                'text/plain': 3 * 1024 * 1024,
+                'application/pdf': 3 * 1024 * 1024,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 3 * 1024 * 1024,
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation': 3 * 1024 * 1024,
             };
             if (!sizeLimits[file.mimetype]) {
                 return callback(new common_2.BadRequestException('Only .txt, .pdf, .docx, and .pptx files are allowed'), false);

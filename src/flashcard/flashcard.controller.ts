@@ -44,10 +44,10 @@ export class FlashcardController {
       }),
       fileFilter: (req, file, callback) => {
         const sizeLimits = {
-          'text/plain': 2 * 1024 * 1024, // 2MB for TXT
-          'application/pdf': 10 * 1024 * 1024, // 10MB for PDF
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 15 * 1024 * 1024, // 15MB for DOCX
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation': 20 * 1024 * 1024, // 20MB for PPTX
+          'text/plain': 3 * 1024 * 1024, // 2MB for TXT
+          'application/pdf': 3 * 1024 * 1024, // 10MB for PDF
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 3 * 1024 * 1024, // 15MB for DOCX
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation': 3 * 1024 * 1024, // 20MB for PPTX
         };
 
         if (!sizeLimits[file.mimetype]) {
