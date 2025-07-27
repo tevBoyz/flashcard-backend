@@ -17,7 +17,7 @@ export class GeminiService {
   }
   
   async generateFlashcards(text: string) {
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `
       You are an expert at generating educational flashcards from text.
@@ -31,6 +31,7 @@ export class GeminiService {
         - Use long answers only if they need more explanation to make a point.
         - Use **natural language and proper grammar**.
         - Punctuations are important. Use question marks and others punctuation for the questions and answers.
+        - Maintain the text language as it is. Do not translate to English. Make sure the question and answer are the same language as the text provided.
         - Format the output as **pure JSON only** — no explanations or extra text.
 
       Text:
@@ -46,7 +47,8 @@ export class GeminiService {
     const jsonStart = rawText.indexOf('[');
     const jsonEnd = rawText.lastIndexOf(']') + 1;
     const jsonString = rawText.substring(jsonStart, jsonEnd);
-
+    const data = JSON.parse(jsonString);
+    
     return JSON.parse(jsonString);
   }
 }
