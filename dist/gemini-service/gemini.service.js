@@ -25,7 +25,7 @@ let GeminiService = class GeminiService {
         this.genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     }
     async generateFlashcards(text) {
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const prompt = `
       You are an expert at generating educational flashcards from text.
 
