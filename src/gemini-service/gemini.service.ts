@@ -20,24 +20,31 @@ export class GeminiService {
     const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
-      You are an expert at generating educational flashcards from text.
+        You are an expert at generating educational flashcards from text.
 
-      Given the text below, generate a JSON array of flashcards that follow these rules:
-        - Each flashcard is an object: { "question": "...", "answer": "..." }
-        - Cover **all important facts and ideas** from the text — do not miss anything.
-        - Use various suitable flashcard types: short answer, true/false, fill-in-the-blank, etc.
-        - Make the **questions descriptive and self-contained** so they make sense without needing the full text.
-        - Answers must be **short**, **clear**, and **no longer than 6 words, unless it is necessary.**.
-        - Use long answers only if they need more explanation to make a point.
-        - Use **natural language and proper grammar**.
-        - Punctuations are important. Use question marks and others punctuation for the questions and answers.
-        - Maintain the text language as it is. Do not translate to English. Make sure the question and answer are the same language as the text provided.
-        - Format the output as **pure JSON only** — no explanations or extra text.
+          Given the text below, generate a JSON array of flashcards that follow these rules:
+          - Each flashcard is an object:
+          { 
+            "question": "...", 
+            "answer": "...", 
+            "contextLinks": ["...", "..."]
+          }
+          - Cover all important facts and ideas from the text — do not miss anything.
+          - Use various suitable flashcard types: short answer, true/false, fill-in-the-blank, etc.
+          - Make the questions descriptive and self-contained so they make sense without needing the full text.
+          - Answers must be short, clear, and no longer than 6 words, unless it is necessary.
+          - Use long answers only if they need more explanation to make a point.
+          - Each flashcard must include 2–3 reliable context links from Wikipedia and brittanica that explain the answer in more detail.
+          - Only include links that are live and from reliable educational websites. Do not include broken or placeholder URLs.
+          - Use natural language and proper grammar.
+          - Punctuations are important. Use question marks and other punctuation for the questions and answers.
+          - All flashcards must strictly remain in the exact same language as the input text. Do not translate or mix languages under any circumstance.
+          - Format the output as pure JSON only — no explanations or extra text.
 
-      Text:
-      """
-      ${text}
-      """
+        Text:
+        """
+        ${text}
+        """
     `;
 
     const result = await model.generateContent(prompt);
